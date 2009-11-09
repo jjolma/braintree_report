@@ -9,8 +9,8 @@ To see their API: http://dev.braintreepaymentsolutions.com/query/
 Example
 =======
 
-q = Braintree::Query.find(:first, :params => {:username => 'testapi', :password => 'password1', :order_id => 'jpj_order_1257346416'})
-puts q.merchant_defined_field
+r = BraintreeReport.find(:first, :params => {:username => 'testapi', :password => 'password1', :order_id => 'jpj_order_1257346416'})
+puts r.merchant_defined_field
 
 
 Copyright (c) 2009 Jeff Jolma, released under the MIT license
