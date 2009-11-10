@@ -5,6 +5,7 @@ Client for accessing Braintree Payment Solution's reporting API.
 
 To see their API: http://dev.braintreepaymentsolutions.com/query/
 
+Note: this is really half-baked.  It supports the one use case I currently care about.
 
 Example
 =======
