@@ -7,7 +7,6 @@ require 'braintree_report'
 class BraintreeReportTest < ActiveSupport::TestCase
 
   def setup
-    ActiveSupport::XmlMini.backend = "LibXML"
     FakeWeb.allow_net_connect = false
   end
 
