@@ -66,6 +66,16 @@ class BraintreeReportTest < ActiveSupport::TestCase
     assert_equal 'custom_3', mdfs['4']
   end
 
+  test "retains index of single merchant defined field" do
+    FakeWeb.register_uri(:post,
+                         "https://secure.braintreepaymentgateway.com/api/query.php",
+                         :body => single_response_with_single_custom_field)
+    report = BraintreeReport.query(:password => 'password1', :order_id => '123')
+
+    mdfs = BraintreeReport.merchant_defined_fields(report)
+    assert_equal 'custom_2', mdfs['3']
+  end
+
   # TODO support for find all
   #    test "find all" do
   #      FakeWeb.register_uri(:get,
@@ -76,6 +86,7 @@ class BraintreeReportTest < ActiveSupport::TestCase
   #      assert_equal 2, report.size
   #      assert_equal '123', report.first.transaction_id
   #    end
+
 
   protected
   def invalid_credentials_response
@@ -122,6 +133,18 @@ class BraintreeReportTest < ActiveSupport::TestCase
  		<merchant_defined_field id="1">custom_0</merchant_defined_field>
         <merchant_defined_field id="3">custom_2</merchant_defined_field>
         <merchant_defined_field id="4">custom_3</merchant_defined_field>
+	</transaction>
+    </nm_response>
+    EOS
+  end
+
+  def single_response_with_single_custom_field
+    <<-EOS
+    <?xml version="1.0" encoding="UTF-8"?>
+    <nm_response>
+	<transaction>
+		<transaction_id>123</transaction_id>
+        <merchant_defined_field id="3">custom_2</merchant_defined_field>
 	</transaction>
     </nm_response>
     EOS

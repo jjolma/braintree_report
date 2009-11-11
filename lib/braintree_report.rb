@@ -40,9 +40,10 @@ class BraintreeReport
     # { 'index' => 'value' }
     def merchant_defined_fields(response)
       if response['transaction']
-        mdfs_hash = response['transaction']['merchant_defined_field']
-        if mdfs_hash
-          mdfs = mdfs_hash.inject({}) do |memo, kv|
+        mdfs = response['transaction']['merchant_defined_field']
+        if mdfs
+          mdfs = [mdfs] if mdfs.is_a? Hash
+          mdfs.inject({}) do |memo, kv|
             k,v = kv['id'], kv['content']
             memo[k] = v
             memo
@@ -50,6 +51,7 @@ class BraintreeReport
         end
       end
     end
+
 
     # stolen and trimmed from rails' Hash.from_xml
     def massage(value)
