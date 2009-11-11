@@ -16,6 +16,6 @@ class BraintreeReportIntegrationTest < ActiveSupport::TestCase
 
   test "real query with bad auth" do
     h = BraintreeReport.query :order_id => 'jpj_order_1257878623', :username => 'testapi', :password => 'OOPS'
-    assert_match /Invalid Username\/Password/, h['error_response'][0]
+    assert_match /Invalid Username\/Password/, h['error_response']
   end
 end

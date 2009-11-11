@@ -16,7 +16,7 @@ class BraintreeReportTest < ActiveSupport::TestCase
                           :body => invalid_credentials_response)
 
     report = BraintreeReport.query(:password => 'password1', :order_id => '123')
-    assert_match /Invalid Username\/Password/, report['error_response'][0]
+    assert_match /Invalid Username\/Password/, report['error_response']
    end
 
   test "empty results" do
@@ -30,7 +30,7 @@ class BraintreeReportTest < ActiveSupport::TestCase
     #     assert_equal [], BraintreeReport.find(:all, 'testapi', :params => { :password => 'password1', :order_id => '123'})
 
     # for now:
-    assert_nil report['transaction']
+    assert_nil report
   end
 
   test "find first" do
@@ -41,10 +41,8 @@ class BraintreeReportTest < ActiveSupport::TestCase
 
     # ideally:
     # assert report.is_a? BraintreeReport::Transaction
-    # assert_equal '123', report.transaction_id
 
-    # for now:
-    assert_equal '123', report['transaction'].first['transaction_id'].first
+    assert_equal '123', report['transaction']['transaction_id']
   end
 
   test "retains indexes of merchant defined fields" do

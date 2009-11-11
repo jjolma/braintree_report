@@ -31,14 +31,16 @@ class BraintreeReport
       server.verify_mode = OpenSSL::SSL::VERIFY_NONE
       response = server.post BASE_URL, query
 
-      XmlSimple.xml_in(response.body, { 'NormaliseSpace' => 2 })
+      response_hash = XmlSimple.xml_in(response.body, { 'NormaliseSpace' => 2 })
+
+      massage(response_hash)
     end
 
     # helper for extracting merchant defined fields
     # { 'index' => 'value' }
     def merchant_defined_fields(response)
       if response['transaction']
-        mdfs_hash = response['transaction'][0]['merchant_defined_field']
+        mdfs_hash = response['transaction']['merchant_defined_field']
         if mdfs_hash
           mdfs = mdfs_hash.inject({}) do |memo, kv|
             k,v = kv['id'], kv['content']
@@ -48,6 +50,31 @@ class BraintreeReport
         end
       end
     end
-  end
 
+    # stolen and trimmed from rails' Hash.from_xml
+    def massage(value)
+      case value.class.to_s
+      when 'Hash'
+        if value.size == 0
+          nil
+        else
+          xml_value = value.inject({}) do |h,(k,v)|
+            h[k] = massage(v)
+            h
+          end
+        end
+      when 'Array'
+        value.map! { |i| massage(i) }
+        case value.length
+        when 0 then nil
+        when 1 then value.first
+        else value
+        end
+      when 'String'
+        value
+      else
+        raise "can't massage #{value.class.name} - #{value.inspect}"
+      end
+    end
+  end
 end
