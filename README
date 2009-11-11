@@ -10,8 +10,9 @@ Note: this is really half-baked.  It supports the one use case I currently care 
 Example
 =======
 
-r = BraintreeReport.find(:first, :params => {:username => 'testapi', :password => 'password1', :order_id => 'jpj_order_1257346416'})
-puts r.merchant_defined_field
+report = BraintreeReport.find(:username => 'testapi', :password => 'password1', :order_id => 'jpj_order_1257346416')
+puts "transaction_id: #{r['transaction'][0]['transaction_id'][0]}"
+puts "merchant defined fields: #{r.merchant_defined_field.inspect}"
 
 
 Copyright (c) 2009 Jeff Jolma, released under the MIT license

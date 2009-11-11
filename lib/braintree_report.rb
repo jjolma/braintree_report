@@ -1,42 +1,53 @@
-require 'active_resource'
+require 'uri'
+require 'net/https'
+require 'rubygems'
+require 'xmlsimple'
 
 #
-# ActiveResource class for Braintree's reporting API
+# Basic class for Braintree's reporting API
 #
-class BraintreeReport < ActiveResource::Base
-  self.site = "https://secure.braintreepaymentgateway.com/api/query.php"
+# It has no real API yet, just returns a hash of Braintree's query results
+#
+# Note: very rough prototype.  Started down the ActiveResource route but ran into a bunch of problems:
+# * Braintree doesn't add "type='array'" to arrays
+# * ActiveResource's Hash.from_xml strips out the id attribute
+#   Braintree uses to specify merchant defined fields.  So, we
+#   couldn't see what the fifth merchant defined field is, for example
+# * Braintree doesn't wrap collections properly. For example, instead
+#   of somethign like "<foos><foo></foo><foo></foo></foos" they use
+#   "<foo></foo><foo></foo>"
+#
+class BraintreeReport
+  BASE_URL = "https://secure.braintreepaymentgateway.com/api/query.php"
 
   class << self
-    # Massage Braintree's data into something suitable for
-    # ActiveResource. They don't supply the type attribute for
-    # collections and they don't properly wrap collections
-    def instantiate_collection(collection, prefix_options = {})
-      if collection.kind_of? Array
-        collection.collect! { |record| instantiate_record(record, prefix_options) }
-      elsif collection.is_a?(Hash) && collection.values.size == 1
-        [instantiate_record(collection, prefix_options)]
-      elsif collection.is_a?(String) && collection.blank?
-        []
-      end
+    def query(options={})
+      query = options.map { |k,v| "#{k}=#{v}" }.join('&')
+      full_url = [BASE_URL, query].join '?'
+
+      uri = URI.parse(full_url)
+      server = Net::HTTP.new uri.host, uri.port
+      server.use_ssl = uri.scheme == 'https'
+      server.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      response = server.post BASE_URL, query
+
+      XmlSimple.xml_in(response.body, { 'NormaliseSpace' => 2 })
     end
 
-    alias :resource_find :find
-
-    # NOTE: using from gives the correct endpoing url, but it works without it
-    # t = Braintree::Query.find(:first, :from => '/api/query.php', :params => { ... }
-    def find(*arguments)
-      output = resource_find(*arguments)
-      handle_any_errors(output)
-      output = output.transaction if output && output.respond_to?(:transaction)
-      output
-    end
-
-    def handle_any_errors(output)
-      if error = (output.respond_to?(:error_response) && output.error_response)
-        if error =~ Regexp.new("Invalid Username/Password")
-          raise ActiveResource::UnauthorizedAccess.new(error)
+    # helper for extracting merchant defined fields
+    # { 'index' => 'value' }
+    def merchant_defined_fields(response)
+      if response['transaction']
+        mdfs_hash = response['transaction'][0]['merchant_defined_field']
+        if mdfs_hash
+          mdfs = mdfs_hash.inject({}) do |memo, kv|
+            k,v = kv['id'], kv['content']
+            memo[k] = v
+            memo
+          end
         end
       end
     end
   end
+
 end
